@@ -34,10 +34,14 @@ def start(message):
 def context_command(message):
     bot.send_message(message.chat.id, "Пожалуйста, отправьте ссылку для извлечения контекста.")
 
+messages = [{"role": "system", "content":  "Ты умный ассистент Саяпиной Александры. Отвечаешь на вопросы, используя контекст предоставленный ниже.\
+Твои ответы короткие и четкие и содержат конкретные инструкции в ответ на вопрос пользователя."}]
+
 # Обработчик текстовых сообщений от пользователя
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
     global context
+    global messages
     if message.text.startswith("http"):
         context = extract_text_from_url(message.text)
         if context:
@@ -48,7 +52,8 @@ def handle_message(message):
 
     if context:
         print("context: ", context)
-        messages = [{"role": "system", "content": context}, {"role": "user", "content": message.text}]
+        messages.append({"role": "user", "content": "Ответь на следующий вопрос используя сведения из контекста ниже.\nКонтекст: {context}\nВопрос: {message.text}\nОтвет:"})
+
 
         completion = client.chat.completions.create(
             model="local-model",
@@ -62,6 +67,7 @@ def handle_message(message):
             response = response[4096:]
     else:
         bot.reply_to(message, "Пожалуйста, отправьте ссылку для извлечения контекста командой /context.")
+
 
 # Запуск бота
 bot.polling()
